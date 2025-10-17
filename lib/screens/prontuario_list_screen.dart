@@ -4,16 +4,17 @@ import '../services/firestore_service.dart';
 import 'formulario_prontuario_screen.dart';
 
 class ProntuarioListScreen extends StatelessWidget {
-  ProntuarioListScreen({super.key});
+  ProntuarioListScreen({super.key, FirestoreService? firestoreService})
+    : _firestoreService = firestoreService ?? FirestoreService();
 
-  final FirestoreService firestoreService = FirestoreService();
+  final FirestoreService _firestoreService;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Prontuários')),
       body: StreamBuilder<List<Prontuario>>(
-        stream: firestoreService.getProntuarios(),
+        stream: _firestoreService.getProntuarios(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -37,7 +38,7 @@ class ProntuarioListScreen extends StatelessWidget {
                 subtitle: Text(p.descricao),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () => firestoreService.deletarProntuario(p.id!),
+                  onPressed: () => _firestoreService.deletarProntuario(p.id!),
                 ),
               );
             },

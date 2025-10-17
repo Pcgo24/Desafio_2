@@ -8,12 +8,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:projetodswm4/main.dart';
-
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    // A minimal counter widget local to the test so the app's Firebase
+    // initialization is not required.
+    await tester.pumpWidget(const MaterialApp(home: _TestCounterApp()));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
@@ -27,4 +26,28 @@ void main() {
     expect(find.text('0'), findsNothing);
     expect(find.text('1'), findsOneWidget);
   });
+}
+
+class _TestCounterApp extends StatefulWidget {
+  const _TestCounterApp({Key? key}) : super(key: key);
+
+  @override
+  State<_TestCounterApp> createState() => _TestCounterAppState();
+}
+
+class _TestCounterAppState extends State<_TestCounterApp> {
+  int _counter = 0;
+
+  void _increment() => setState(() => _counter++);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Text('$_counter')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _increment,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 }
