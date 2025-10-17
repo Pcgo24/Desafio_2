@@ -9,20 +9,17 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Só inicializa se ainda não existir
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } else {
-    Firebase.app(); // pega a instância já existente
+    Firebase.app();
   }
 
-  // Inicializa notificações (opcional). Token retorna null se falhar.
   try {
     await NotificationService().init();
   } catch (_) {
-    // ignore errors here, não atrapalha execução
   }
 
   runApp(const MyApp());

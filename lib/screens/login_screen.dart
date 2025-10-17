@@ -25,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     try {
       await _service.signIn(_emailCtrl.text.trim(), _passCtrl.text);
-      // AuthGate listens to authStateChanges and will update the UI.
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(

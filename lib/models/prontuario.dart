@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
-/// Modelo Prontuario
-/// Representa um prontuário eletrônico simples.
 class Prontuario {
   final String? id;
   final String paciente;
@@ -16,7 +14,6 @@ class Prontuario {
     required this.data,
   });
 
-  /// Converte para Map (útil para Firestore ou serialização)
   Map<String, dynamic> toMap() {
     return {
       'paciente': paciente,
@@ -25,7 +22,6 @@ class Prontuario {
     };
   }
 
-  /// Converte para um Map adequado para salvar no Firestore (usa Timestamp)
   Map<String, dynamic> toFirestoreMap() {
     return {
       'paciente': paciente,
@@ -34,7 +30,6 @@ class Prontuario {
     };
   }
 
-  /// Constrói a partir de um Map e um id.
   factory Prontuario.fromMap(String id, Map<String, dynamic> map) {
     final raw = map['data'];
     DateTime parsed;
@@ -56,7 +51,6 @@ class Prontuario {
     );
   }
 
-  /// JSON helpers
   String toJson() => json.encode(toMap());
 
   factory Prontuario.fromJson(String id, String source) {

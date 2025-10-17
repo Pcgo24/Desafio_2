@@ -8,7 +8,6 @@ class FirestoreService {
 
   Future<void> adicionarProntuario(Prontuario prontuario) async {
     final data = prontuario.toFirestoreMap();
-    // If there's an authenticated user, save the uid to satisfy the project's security rules
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       data['uid'] = uid;
@@ -35,9 +34,7 @@ class FirestoreService {
     );
   }
 
-  // Query por nome do paciente (case-insensitive simple contains)
   Stream<List<Prontuario>> queryByPaciente(String paciente) {
-    // Para consultas mais avançadas é melhor usar índices ou um campo lowercased
     return prontuariosCollection
         .where('paciente', isGreaterThanOrEqualTo: paciente)
         .where('paciente', isLessThanOrEqualTo: paciente + '\uf8ff')
@@ -47,7 +44,6 @@ class FirestoreService {
         );
   }
 
-  // Query por intervalo de datas
   Stream<List<Prontuario>> queryByDateRange(DateTime from, DateTime to) {
     final fromTs = Timestamp.fromDate(from);
     final toTs = Timestamp.fromDate(to);
@@ -61,7 +57,6 @@ class FirestoreService {
         );
   }
 
-  // Salva token de notificação para o usuário no Firestore (opcional)
   Future<void> saveNotificationToken(String uid, String token) async {
     final ref = FirebaseFirestore.instance
         .collection('users')

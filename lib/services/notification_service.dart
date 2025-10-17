@@ -16,7 +16,6 @@ class NotificationService {
         await FirestoreService().saveNotificationToken(user.uid, token);
       }
     } catch (_) {
-      // ignore errors here
     }
     return token;
   }

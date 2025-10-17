@@ -13,7 +13,6 @@ class AuthService {
   Future<UserCredential> register(String email, String password) =>
       _auth.createUserWithEmailAndPassword(email: email, password: password);
 
-  // anonymous sign-in removed to enforce authenticated logins only
 
   Future<void> signOut() => _auth.signOut();
 }

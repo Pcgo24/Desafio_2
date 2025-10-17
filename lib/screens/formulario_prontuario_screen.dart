@@ -55,7 +55,6 @@ class _FormularioProntuarioScreenState
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
-    // Check authentication: if user is not logged in, abort and ask to login
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       setState(() => _isSaving = false);
