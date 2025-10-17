@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/prontuario.dart';
 
 class FirestoreService {
@@ -6,7 +7,20 @@ class FirestoreService {
       FirebaseFirestore.instance.collection('prontuarios');
 
   Future<void> adicionarProntuario(Prontuario prontuario) async {
-    await prontuariosCollection.add(prontuario.toFirestoreMap());
+    final data = prontuario.toFirestoreMap();
+    // If there's an authenticated user, save the uid to satisfy the project's security rules
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      data['uid'] = uid;
+    }
+    await prontuariosCollection.add(data);
+  }
+
+  Future<void> atualizarProntuario(Prontuario prontuario) async {
+    if (prontuario.id == null) throw ArgumentError('Prontuario sem id');
+    await prontuariosCollection
+        .doc(prontuario.id)
+        .update(prontuario.toFirestoreMap());
   }
 
   Future<void> deletarProntuario(String id) async {
@@ -19,5 +33,43 @@ class FirestoreService {
           .map((doc) => Prontuario.fromMap(doc.id, doc.data()))
           .toList(),
     );
+  }
+
+  // Query por nome do paciente (case-insensitive simple contains)
+  Stream<List<Prontuario>> queryByPaciente(String paciente) {
+    // Para consultas mais avançadas é melhor usar índices ou um campo lowercased
+    return prontuariosCollection
+        .where('paciente', isGreaterThanOrEqualTo: paciente)
+        .where('paciente', isLessThanOrEqualTo: paciente + '\uf8ff')
+        .snapshots()
+        .map(
+          (s) => s.docs.map((d) => Prontuario.fromMap(d.id, d.data())).toList(),
+        );
+  }
+
+  // Query por intervalo de datas
+  Stream<List<Prontuario>> queryByDateRange(DateTime from, DateTime to) {
+    final fromTs = Timestamp.fromDate(from);
+    final toTs = Timestamp.fromDate(to);
+    return prontuariosCollection
+        .where('data', isGreaterThanOrEqualTo: fromTs)
+        .where('data', isLessThanOrEqualTo: toTs)
+        .orderBy('data', descending: true)
+        .snapshots()
+        .map(
+          (s) => s.docs.map((d) => Prontuario.fromMap(d.id, d.data())).toList(),
+        );
+  }
+
+  // Salva token de notificação para o usuário no Firestore (opcional)
+  Future<void> saveNotificationToken(String uid, String token) async {
+    final ref = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('tokens');
+    await ref.doc(token).set({
+      'token': token,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }

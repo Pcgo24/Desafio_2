@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/prontuario.dart';
 import '../services/firestore_service.dart';
 
 class FormularioProntuarioScreen extends StatefulWidget {
-  const FormularioProntuarioScreen({super.key});
+  final Prontuario? prontuario;
+  const FormularioProntuarioScreen({super.key, this.prontuario});
 
   @override
   State<FormularioProntuarioScreen> createState() =>
@@ -17,6 +20,18 @@ class _FormularioProntuarioScreenState
   final _descricaoCtrl = TextEditingController();
   DateTime _data = DateTime.now();
   final FirestoreService _service = FirestoreService();
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.prontuario;
+    if (p != null) {
+      _pacienteCtrl.text = p.paciente;
+      _descricaoCtrl.text = p.descricao;
+      _data = p.data;
+    }
+  }
 
   @override
   void dispose() {
@@ -39,12 +54,69 @@ class _FormularioProntuarioScreenState
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+    // Check authentication: if user is not logged in, abort and ask to login
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      setState(() => _isSaving = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Faça login antes de salvar um prontuário.'),
+        ),
+      );
+      return;
+    }
     final prontuario = Prontuario(
+      id: widget.prontuario?.id,
       paciente: _pacienteCtrl.text,
       descricao: _descricaoCtrl.text,
       data: _data,
     );
-    await _service.adicionarProntuario(prontuario);
+    if (prontuario.id == null) {
+      try {
+        await _service.adicionarProntuario(prontuario);
+      } on FirebaseException catch (e) {
+        setState(() => _isSaving = false);
+        final msg = e.code == 'permission-denied'
+            ? 'Sem permissão para salvar. Verifique as regras do Firestore ou autenticação.'
+            : 'Erro ao salvar: ${e.message}';
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
+        return;
+      } catch (e) {
+        setState(() => _isSaving = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao salvar')));
+        return;
+      }
+    } else {
+      try {
+        await _service.atualizarProntuario(prontuario);
+      } on FirebaseException catch (e) {
+        setState(() => _isSaving = false);
+        final msg = e.code == 'permission-denied'
+            ? 'Sem permissão para atualizar. Verifique as regras do Firestore ou autenticação.'
+            : 'Erro ao atualizar: ${e.message}';
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
+        return;
+      } catch (e) {
+        setState(() => _isSaving = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao atualizar')));
+        return;
+      }
+    }
+    setState(() => _isSaving = false);
     if (!mounted) return;
     Navigator.pop(context);
   }
@@ -83,7 +155,19 @@ class _FormularioProntuarioScreenState
                 ],
               ),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _save, child: const Text('Salvar')),
+              SizedBox(
+                width: 140,
+                child: ElevatedButton(
+                  onPressed: _isSaving ? null : _save,
+                  child: _isSaving
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Salvar'),
+                ),
+              ),
             ],
           ),
         ),

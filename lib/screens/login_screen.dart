@@ -25,8 +25,21 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     try {
       await _service.signIn(_emailCtrl.text.trim(), _passCtrl.text);
+      // AuthGate listens to authStateChanges and will update the UI.
+    } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _register() async {
+    setState(() => _loading = true);
+    try {
+      await _service.register(_emailCtrl.text.trim(), _passCtrl.text);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -55,11 +68,23 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: const InputDecoration(labelText: 'Senha'),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loading ? null : _login,
-              child: _loading
-                  ? const CircularProgressIndicator()
-                  : const Text('Entrar'),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _login,
+                    child: _loading
+                        ? const CircularProgressIndicator()
+                        : const Text('Entrar'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _loading ? null : _register,
+                  child: const Text('Registrar'),
+                ),
+                // anonymous sign-in button removed
+              ],
             ),
           ],
         ),
